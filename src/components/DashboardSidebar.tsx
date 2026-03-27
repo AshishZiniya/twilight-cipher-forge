@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { Code2, Hash, Key, Palette, Clock, FileCode, Globe, Braces, Home, User, Users, TestTube, Moon, Sun, ChevronLeft, ChevronRight } from "lucide-react";
+import { Code2, Hash, Key, Palette, Clock, FileCode, Globe, Braces, Home, User, Users, TestTube, Moon, Sun, ChevronLeft, ChevronRight, MessageSquare } from "lucide-react";
 import { useState } from "react";
 import { toggleTheme, isDarkMode } from "@/hooks/use-theme";
 
