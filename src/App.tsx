@@ -34,6 +34,7 @@ const AppContent = () => {
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/dashboard" element={<DashboardLayout />}>
           <Route index element={<DashboardHome />} />
+          <Route path="chat" element={<ChatPage />} />
           <Route path="url-encoder" element={<UrlEncoderPage />} />
           <Route path="hash-generator" element={<HashGeneratorPage />} />
           <Route path="jwt-debugger" element={<JwtDebuggerPage />} />

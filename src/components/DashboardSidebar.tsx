@@ -5,6 +5,7 @@ import { toggleTheme, isDarkMode } from "@/hooks/use-theme";
 
 const tools = [
   { name: "Dashboard", path: "/dashboard", icon: Home },
+  { name: "AI Chat", path: "/dashboard/chat", icon: MessageSquare },
   { name: "URL Encoder", path: "/dashboard/url-encoder", icon: Globe },
   { name: "Hash Generator", path: "/dashboard/hash-generator", icon: Hash },
   { name: "JWT Debugger", path: "/dashboard/jwt-debugger", icon: Key },
