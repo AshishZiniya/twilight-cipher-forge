@@ -1,10 +1,11 @@
 import { Link, useLocation } from "react-router-dom";
-import { Code2, Hash, Key, Palette, Clock, FileCode, Globe, Braces, Home, User, Users, TestTube, Moon, Sun, ChevronLeft, ChevronRight } from "lucide-react";
+import { Code2, Hash, Key, Palette, Clock, FileCode, Globe, Braces, Home, User, Users, TestTube, Moon, Sun, ChevronLeft, ChevronRight, MessageSquare } from "lucide-react";
 import { useState } from "react";
 import { toggleTheme, isDarkMode } from "@/hooks/use-theme";
 
 const tools = [
   { name: "Dashboard", path: "/dashboard", icon: Home },
+  { name: "AI Chat", path: "/dashboard/chat", icon: MessageSquare },
   { name: "URL Encoder", path: "/dashboard/url-encoder", icon: Globe },
   { name: "Hash Generator", path: "/dashboard/hash-generator", icon: Hash },
   { name: "JWT Debugger", path: "/dashboard/jwt-debugger", icon: Key },

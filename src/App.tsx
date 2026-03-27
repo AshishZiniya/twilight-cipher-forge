@@ -19,6 +19,7 @@ import CronParserPage from "./pages/tools/CronParserPage";
 import DiffCheckerPage from "./pages/tools/DiffCheckerPage";
 import SqlFormatterPage from "./pages/tools/SqlFormatterPage";
 import ApiTesterPage from "./pages/tools/ApiTesterPage";
+import ChatPage from "./pages/ChatPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -33,6 +34,7 @@ const AppContent = () => {
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/dashboard" element={<DashboardLayout />}>
           <Route index element={<DashboardHome />} />
+          <Route path="chat" element={<ChatPage />} />
           <Route path="url-encoder" element={<UrlEncoderPage />} />
           <Route path="hash-generator" element={<HashGeneratorPage />} />
           <Route path="jwt-debugger" element={<JwtDebuggerPage />} />
