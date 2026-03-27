@@ -19,6 +19,7 @@ import CronParserPage from "./pages/tools/CronParserPage";
 import DiffCheckerPage from "./pages/tools/DiffCheckerPage";
 import SqlFormatterPage from "./pages/tools/SqlFormatterPage";
 import ApiTesterPage from "./pages/tools/ApiTesterPage";
+import ChatPage from "./pages/ChatPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
