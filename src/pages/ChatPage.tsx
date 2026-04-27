@@ -347,8 +347,9 @@ const CanvasInner = () => {
 };
 
 const ChatPage = () => {
+  // Break out of DashboardLayout's p-8 padding and fill the available space
   return (
-    <div className="fixed inset-0 lg:left-64 bg-background">
+    <div className="-m-8 h-[calc(100vh)] bg-background">
       <ReactFlowProvider>
         <CanvasInner />
       </ReactFlowProvider>
