@@ -185,22 +185,38 @@ const CanvasInner = () => {
     [nodes, setNodes, setEdges, counter]
   );
 
+  const createCardAt = useCallback(
+    (flowX: number, flowY: number) => {
+      const newId = `card-${counter}`;
+      setCounter((c) => c + 1);
+      const newNode: Node = {
+        id: newId,
+        type: "chatCard",
+        position: { x: flowX - 190, y: flowY - 180 },
+        data: { title: "New Chat", messages: [] },
+        style: { width: 380, height: 360 },
+      };
+      setNodes((nds) => [...nds, newNode]);
+      return newId;
+    },
+    [counter, setNodes]
+  );
+
   const addCard = useCallback(() => {
-    const newId = `card-${counter}`;
-    setCounter((c) => c + 1);
     const center = screenToFlowPosition({
       x: window.innerWidth / 2,
       y: window.innerHeight / 2,
     });
-    const newNode: Node = {
-      id: newId,
-      type: "chatCard",
-      position: { x: center.x - 190, y: center.y - 180 },
-      data: { title: "New Chat", messages: [] },
-      style: { width: 380, height: 360 },
-    };
-    setNodes((nds) => [...nds, newNode]);
-  }, [counter, screenToFlowPosition, setNodes]);
+    createCardAt(center.x, center.y);
+  }, [screenToFlowPosition, createCardAt]);
+
+  const onPaneClick = useCallback(
+    (event: React.MouseEvent) => {
+      const pos = screenToFlowPosition({ x: event.clientX, y: event.clientY });
+      createCardAt(pos.x, pos.y);
+    },
+    [screenToFlowPosition, createCardAt]
+  );
 
   const clearAll = useCallback(() => {
     if (!confirm("Clear all chat cards from the canvas?")) return;
@@ -249,6 +265,7 @@ const CanvasInner = () => {
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
+        onPaneClick={onPaneClick}
         nodeTypes={nodeTypes}
         fitView
         minZoom={0.2}
