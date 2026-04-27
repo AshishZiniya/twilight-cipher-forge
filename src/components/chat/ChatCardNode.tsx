@@ -189,9 +189,11 @@ const SelectionPopover = ({
 
   return (
     <div
+      data-selection-popover
       className="absolute z-30 -translate-x-1/2 nodrag"
       style={{ left: selection.x, top: selection.y }}
       onMouseDown={(e) => e.stopPropagation()}
+      onMouseUp={(e) => e.stopPropagation()}
       onClick={(e) => e.stopPropagation()}
     >
       <div className="flex items-center gap-1 px-1.5 py-1 rounded-lg bg-popover/95 backdrop-blur-xl border border-border shadow-2xl shadow-black/40">
