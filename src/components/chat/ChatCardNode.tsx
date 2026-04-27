@@ -196,7 +196,7 @@ const ChatCardNode = ({ id, data, selected }: NodeProps) => {
       </div>
 
       {/* Messages */}
-      <div ref={scrollRef} className="flex-1 overflow-y-auto px-3 py-3 space-y-3 nowheel nodrag">
+      <div ref={scrollRef} className="flex-1 overflow-y-auto px-3 py-3 space-y-3 nowheel nodrag select-text cursor-text">
         {d.messages.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-center gap-2 py-8">
             <div className="w-10 h-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center">
