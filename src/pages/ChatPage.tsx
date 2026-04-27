@@ -349,9 +349,19 @@ const CanvasInner = () => {
           onDelete: handleDelete,
           onRename: handleRename,
           onBranch: handleBranch,
+          onNavigateParent: handleNavigateParent,
+          onCreateFromSelection: handleCreateFromSelection,
         },
       })),
-    [nodes, handleSend, handleDelete, handleRename, handleBranch]
+    [
+      nodes,
+      handleSend,
+      handleDelete,
+      handleRename,
+      handleBranch,
+      handleNavigateParent,
+      handleCreateFromSelection,
+    ]
   );
 
   return (
@@ -362,7 +372,6 @@ const CanvasInner = () => {
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
-        onPaneClick={() => {}}
         onDoubleClick={onPaneDoubleClick}
         nodeTypes={nodeTypes}
         fitView
