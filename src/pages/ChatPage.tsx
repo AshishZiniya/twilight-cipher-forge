@@ -103,7 +103,7 @@ const initialNodes: Node[] = [
 const CanvasInner = () => {
   const [nodes, setNodes, onNodesChange] = useNodesState<Node>(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
-  const { screenToFlowPosition, fitView } = useReactFlow();
+  const { screenToFlowPosition, fitView, setCenter } = useReactFlow();
   const [counter, setCounter] = useState(2);
 
   const updateCard = useCallback(
@@ -168,7 +168,7 @@ const CanvasInner = () => {
           x: (source.position?.x ?? 0) + (source.width ?? 380) + 80,
           y: (source.position?.y ?? 0) + 40,
         },
-        data: { title: "Branch", messages: inherited },
+        data: { title: "Branch", messages: inherited, parentId: sourceId },
         style: { width: 380, height: 360 },
       };
       setNodes((nds) => [...nds, newNode]);
@@ -213,13 +213,108 @@ const CanvasInner = () => {
     createCardAt(center.x, center.y);
   }, [screenToFlowPosition, createCardAt]);
 
-  const onPaneClick = useCallback(
+  const onPaneDoubleClick = useCallback(
     (event: React.MouseEvent) => {
+      // Only when double-clicking the empty pane / background, not a node
+      const target = event.target as HTMLElement;
+      if (!target.closest(".react-flow__pane") && !target.classList.contains("react-flow__pane")) {
+        return;
+      }
       const pos = screenToFlowPosition({ x: event.clientX, y: event.clientY });
       createCardAt(pos.x, pos.y);
     },
     [screenToFlowPosition, createCardAt]
   );
+
+  // Create a new connected child card with selected text as quoted context
+  const handleCreateFromSelection = useCallback(
+    (sourceId: string, selectedText: string, prompt: string) => {
+      const source = nodes.find((n) => n.id === sourceId);
+      if (!source) return;
+      const newId = `card-${counter}`;
+      setCounter((c) => c + 1);
+
+      const quoted = selectedText.length > 280 ? selectedText.slice(0, 280) + "…" : selectedText;
+      const userContent = `> ${quoted.replace(/\n/g, "\n> ")}\n\n${prompt}`;
+      const userMsg: CardMessage = {
+        id: crypto.randomUUID(),
+        role: "user",
+        content: userContent,
+      };
+
+      const titleSeed = prompt.slice(0, 30) + (prompt.length > 30 ? "…" : "");
+      const newNode: Node = {
+        id: newId,
+        type: "chatCard",
+        dragHandle: ".card-drag-handle",
+        position: {
+          x: (source.position?.x ?? 0) + (source.width ?? 380) + 80,
+          y: (source.position?.y ?? 0) + 40,
+        },
+        data: {
+          title: titleSeed || "From selection",
+          messages: [userMsg],
+          parentId: sourceId,
+          isLoading: true,
+        },
+        style: { width: 380, height: 360 },
+      };
+
+      setNodes((nds) => [...nds, newNode]);
+      setEdges((eds) => [
+        ...eds,
+        {
+          id: `e-${sourceId}-${newId}`,
+          source: sourceId,
+          target: newId,
+          animated: true,
+          style: { stroke: "hsl(var(--primary))", strokeWidth: 1.5 },
+          markerEnd: { type: MarkerType.ArrowClosed, color: "hsl(var(--primary))" },
+        },
+      ]);
+
+      // Generate AI reply about the selection + prompt
+      const delay = 600 + Math.random() * 800;
+      setTimeout(() => {
+        const aiMsg: CardMessage = {
+          id: crypto.randomUUID(),
+          role: "assistant",
+          content: generateReply(`${selectedText}\n${prompt}`),
+        };
+        setNodes((nds) =>
+          nds.map((n) =>
+            n.id === newId
+              ? {
+                  ...n,
+                  data: {
+                    ...n.data,
+                    messages: [...((n.data as ChatCardData).messages || []), aiMsg],
+                    isLoading: false,
+                  },
+                }
+              : n
+          )
+        );
+      }, delay);
+    },
+    [nodes, setNodes, setEdges, counter]
+  );
+
+  // Pan/zoom to a parent card
+  const handleNavigateParent = useCallback(
+    (parentId: string) => {
+      const parent = nodes.find((n) => n.id === parentId);
+      if (!parent) return;
+      const cx = (parent.position?.x ?? 0) + (parent.width ?? 380) / 2;
+      const cy = (parent.position?.y ?? 0) + (parent.height ?? 360) / 2;
+      setCenter(cx, cy, { zoom: 1, duration: 500 });
+      setNodes((nds) =>
+        nds.map((n) => ({ ...n, selected: n.id === parentId }))
+      );
+    },
+    [nodes, setNodes]
+  );
+
 
   const clearAll = useCallback(() => {
     if (!confirm("Clear all chat cards from the canvas?")) return;
@@ -254,9 +349,19 @@ const CanvasInner = () => {
           onDelete: handleDelete,
           onRename: handleRename,
           onBranch: handleBranch,
+          onNavigateParent: handleNavigateParent,
+          onCreateFromSelection: handleCreateFromSelection,
         },
       })),
-    [nodes, handleSend, handleDelete, handleRename, handleBranch]
+    [
+      nodes,
+      handleSend,
+      handleDelete,
+      handleRename,
+      handleBranch,
+      handleNavigateParent,
+      handleCreateFromSelection,
+    ]
   );
 
   return (
@@ -267,7 +372,7 @@ const CanvasInner = () => {
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
-        onPaneClick={onPaneClick}
+        onDoubleClick={onPaneDoubleClick}
         nodeTypes={nodeTypes}
         fitView
         minZoom={0.2}

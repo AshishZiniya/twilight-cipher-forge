@@ -1,6 +1,18 @@
 import { memo, useState, useCallback, useRef, useEffect } from "react";
 import { Handle, Position, NodeProps, NodeResizer } from "@xyflow/react";
-import { Send, X, Bot, User, Copy, Check, RotateCcw, Pencil, Loader2 } from "lucide-react";
+import {
+  Send,
+  X,
+  Bot,
+  User,
+  Copy,
+  Check,
+  RotateCcw,
+  Pencil,
+  Loader2,
+  ArrowLeft,
+  Sparkles,
+} from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
@@ -16,10 +28,13 @@ export interface ChatCardData {
   title: string;
   messages: CardMessage[];
   isLoading?: boolean;
+  parentId?: string | null;
   onSend: (id: string, content: string) => void;
   onDelete: (id: string) => void;
   onRename: (id: string, title: string) => void;
   onBranch: (id: string, fromMessageId: string) => void;
+  onNavigateParent: (parentId: string) => void;
+  onCreateFromSelection: (sourceId: string, selectedText: string, prompt: string) => void;
   [key: string]: unknown;
 }
 
@@ -33,15 +48,26 @@ const CodeBlock = ({ language, value }: { language: string; value: string }) => 
   return (
     <div className="relative group rounded-md overflow-hidden my-2 border border-border/60 nodrag">
       <div className="flex items-center justify-between px-3 py-1 bg-muted/80 border-b border-border/60">
-        <span className="text-[10px] font-mono uppercase tracking-wide text-muted-foreground">{language || "code"}</span>
-        <button onClick={copy} className="text-[10px] text-muted-foreground hover:text-foreground flex items-center gap-1">
+        <span className="text-[10px] font-mono uppercase tracking-wide text-muted-foreground">
+          {language || "code"}
+        </span>
+        <button
+          onClick={copy}
+          className="text-[10px] text-muted-foreground hover:text-foreground flex items-center gap-1"
+        >
           {copied ? <Check className="w-3 h-3 text-green-500" /> : <Copy className="w-3 h-3" />}
         </button>
       </div>
       <SyntaxHighlighter
         language={language || "text"}
         style={oneDark}
-        customStyle={{ margin: 0, padding: "0.6rem 0.75rem", background: "hsl(var(--muted) / 0.5)", fontSize: "0.72rem", lineHeight: 1.5 }}
+        customStyle={{
+          margin: 0,
+          padding: "0.6rem 0.75rem",
+          background: "hsl(var(--muted) / 0.5)",
+          fontSize: "0.72rem",
+          lineHeight: 1.5,
+        }}
         wrapLongLines
       >
         {value}
@@ -89,7 +115,10 @@ const MessageBubble = ({
                 const codeStr = String(children).replace(/\n$/, "");
                 if (match) return <CodeBlock language={match[1]} value={codeStr} />;
                 return (
-                  <code className="px-1 py-0.5 rounded bg-muted text-[11.5px] font-mono text-primary" {...props}>
+                  <code
+                    className="px-1 py-0.5 rounded bg-muted text-[11.5px] font-mono text-primary"
+                    {...props}
+                  >
                     {children}
                   </code>
                 );
@@ -97,13 +126,21 @@ const MessageBubble = ({
               p: ({ children }) => <p className="mb-1.5 last:mb-0">{children}</p>,
               ul: ({ children }) => <ul className="list-disc pl-4 mb-1.5 space-y-0.5">{children}</ul>,
               ol: ({ children }) => <ol className="list-decimal pl-4 mb-1.5 space-y-0.5">{children}</ol>,
+              blockquote: ({ children }) => (
+                <blockquote className="border-l-2 border-primary/40 pl-2 italic text-muted-foreground my-1.5">
+                  {children}
+                </blockquote>
+              ),
             }}
           >
             {msg.content}
           </ReactMarkdown>
         </div>
         <div className="flex items-center gap-2 mt-1 opacity-0 group-hover:opacity-100 transition-opacity nodrag">
-          <button onClick={copy} className="text-[10px] text-muted-foreground hover:text-foreground flex items-center gap-1">
+          <button
+            onClick={copy}
+            className="text-[10px] text-muted-foreground hover:text-foreground flex items-center gap-1"
+          >
             {copied ? <Check className="w-2.5 h-2.5 text-green-500" /> : <Copy className="w-2.5 h-2.5" />}
             Copy
           </button>
@@ -122,16 +159,97 @@ const MessageBubble = ({
   );
 };
 
+interface SelectionState {
+  text: string;
+  x: number; // relative to messages container
+  y: number;
+}
+
+const SelectionPopover = ({
+  selection,
+  onAsk,
+  onClose,
+}: {
+  selection: SelectionState;
+  onAsk: (prompt: string) => void;
+  onClose: () => void;
+}) => {
+  const [prompt, setPrompt] = useState("");
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    inputRef.current?.focus({ preventScroll: true });
+  }, []);
+
+  const submit = () => {
+    const v = prompt.trim();
+    if (!v) return;
+    onAsk(v);
+  };
+
+  return (
+    <div
+      className="absolute z-30 -translate-x-1/2 nodrag"
+      style={{ left: selection.x, top: selection.y }}
+      onMouseDown={(e) => e.stopPropagation()}
+      onClick={(e) => e.stopPropagation()}
+    >
+      <div className="flex items-center gap-1 px-1.5 py-1 rounded-lg bg-popover/95 backdrop-blur-xl border border-border shadow-2xl shadow-black/40">
+        <button
+          onClick={() => onAsk("Explain this")}
+          className="flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium text-foreground hover:bg-primary/10 hover:text-primary transition-colors"
+        >
+          <Sparkles className="w-3 h-3" />
+          Explain
+        </button>
+        <span className="w-px h-4 bg-border" />
+        <input
+          ref={inputRef}
+          value={prompt}
+          onChange={(e) => setPrompt(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              submit();
+            } else if (e.key === "Escape") {
+              onClose();
+            }
+          }}
+          placeholder="Ask..."
+          className="bg-transparent border-0 outline-none text-[11px] text-foreground placeholder:text-muted-foreground w-32 px-1"
+        />
+        <button
+          onClick={submit}
+          disabled={!prompt.trim()}
+          className="p-1 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-40 transition-all"
+        >
+          <Send className="w-2.5 h-2.5" />
+        </button>
+      </div>
+    </div>
+  );
+};
+
 const ChatCardNode = ({ id, data, selected }: NodeProps) => {
   const d = data as ChatCardData;
   const [input, setInput] = useState("");
   const [editingTitle, setEditingTitle] = useState(false);
   const [titleDraft, setTitleDraft] = useState(d.title);
+  const [selection, setSelection] = useState<SelectionState | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const messagesRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
+    scrollRef.current?.scrollTo({
+      top: scrollRef.current.scrollHeight,
+      behavior: "smooth",
+    });
   }, [d.messages.length, d.isLoading]);
+
+  // Reset titleDraft when external title changes
+  useEffect(() => {
+    setTitleDraft(d.title);
+  }, [d.title]);
 
   const submit = useCallback(() => {
     const v = input.trim();
@@ -144,6 +262,42 @@ const ChatCardNode = ({ id, data, selected }: NodeProps) => {
     setEditingTitle(false);
     if (titleDraft.trim()) d.onRename(id, titleDraft.trim());
     else setTitleDraft(d.title);
+  };
+
+  // Track text selection within the messages area
+  const handleSelection = useCallback(() => {
+    const sel = window.getSelection();
+    if (!sel || sel.isCollapsed || sel.rangeCount === 0) {
+      setSelection(null);
+      return;
+    }
+    const text = sel.toString().trim();
+    if (!text || text.length < 2) {
+      setSelection(null);
+      return;
+    }
+    const container = messagesRef.current;
+    if (!container) return;
+    // Make sure selection is inside this card's messages
+    const range = sel.getRangeAt(0);
+    if (!container.contains(range.commonAncestorContainer)) {
+      setSelection(null);
+      return;
+    }
+    const rect = range.getBoundingClientRect();
+    const containerRect = container.getBoundingClientRect();
+    setSelection({
+      text,
+      x: rect.left - containerRect.left + rect.width / 2,
+      y: rect.top - containerRect.top - 8,
+    });
+  }, []);
+
+  const handleAskFromSelection = (prompt: string) => {
+    if (!selection) return;
+    d.onCreateFromSelection(id, selection.text, prompt);
+    window.getSelection()?.removeAllRanges();
+    setSelection(null);
   };
 
   return (
@@ -159,11 +313,28 @@ const ChatCardNode = ({ id, data, selected }: NodeProps) => {
         lineClassName="!border-primary/40"
         handleClassName="!bg-primary !border-primary !w-2 !h-2 !rounded-sm"
       />
-      <Handle type="target" position={Position.Left} className="!bg-primary !border-primary/50 !w-2 !h-2" />
-      <Handle type="source" position={Position.Right} className="!bg-primary !border-primary/50 !w-2 !h-2" />
+      <Handle
+        type="target"
+        position={Position.Left}
+        className="!bg-primary !border-primary/50 !w-2 !h-2"
+      />
+      <Handle
+        type="source"
+        position={Position.Right}
+        className="!bg-primary !border-primary/50 !w-2 !h-2"
+      />
 
       {/* Header (drag handle) */}
       <div className="card-drag-handle flex items-center gap-2 px-3 py-2 border-b border-border/60 bg-muted/40 cursor-move select-none">
+        {d.parentId && (
+          <button
+            onClick={() => d.onNavigateParent(d.parentId!)}
+            title="Go to parent chat"
+            className="p-1 rounded hover:bg-primary/10 text-muted-foreground hover:text-primary nodrag"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" />
+          </button>
+        )}
         <div className="w-5 h-5 rounded-md bg-primary/15 border border-primary/30 flex items-center justify-center">
           <Bot className="w-3 h-3 text-primary" />
         </div>
@@ -178,7 +349,9 @@ const ChatCardNode = ({ id, data, selected }: NodeProps) => {
           />
         ) : (
           <>
-            <span className="flex-1 text-xs font-semibold text-foreground truncate">{d.title}</span>
+            <span className="flex-1 text-xs font-semibold text-foreground truncate">
+              {d.title}
+            </span>
             <button
               onClick={() => setEditingTitle(true)}
               className="p-1 rounded hover:bg-muted text-muted-foreground hover:text-foreground nodrag"
@@ -196,31 +369,51 @@ const ChatCardNode = ({ id, data, selected }: NodeProps) => {
       </div>
 
       {/* Messages */}
-      <div ref={scrollRef} className="flex-1 overflow-y-auto px-3 py-3 space-y-3 nowheel nodrag select-text cursor-text">
-        {d.messages.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full text-center gap-2 py-8">
-            <div className="w-10 h-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center">
-              <Bot className="w-5 h-5 text-primary" />
+      <div
+        ref={messagesRef}
+        className="relative flex-1 min-h-0"
+        onMouseUp={handleSelection}
+        onKeyUp={handleSelection}
+      >
+        <div
+          ref={scrollRef}
+          className="absolute inset-0 overflow-y-auto px-3 py-3 space-y-3 nowheel nodrag select-text cursor-text"
+        >
+          {d.messages.length === 0 ? (
+            <div className="flex flex-col items-center justify-center h-full text-center gap-2 py-8">
+              <div className="w-10 h-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center">
+                <Bot className="w-5 h-5 text-primary" />
+              </div>
+              <p className="text-xs font-medium text-foreground">Start a conversation</p>
+              <p className="text-[10px] text-muted-foreground max-w-[200px]">
+                Ask anything. Select any reply text to branch a new chat with that context.
+              </p>
             </div>
-            <p className="text-xs font-medium text-foreground">Start a conversation</p>
-            <p className="text-[10px] text-muted-foreground max-w-[200px]">
-              Ask anything. Branch from any reply to create a new exploration.
-            </p>
-          </div>
-        ) : (
-          d.messages.map((m) => <MessageBubble key={m.id} msg={m} cardId={id} onBranch={d.onBranch} />)
-        )}
-        {d.isLoading && (
-          <div className="flex gap-2">
-            <div className="w-6 h-6 rounded-md bg-accent border border-border flex items-center justify-center">
-              <Loader2 className="w-3 h-3 text-primary animate-spin" />
+          ) : (
+            d.messages.map((m) => (
+              <MessageBubble key={m.id} msg={m} cardId={id} onBranch={d.onBranch} />
+            ))
+          )}
+          {d.isLoading && (
+            <div className="flex gap-2">
+              <div className="w-6 h-6 rounded-md bg-accent border border-border flex items-center justify-center">
+                <Loader2 className="w-3 h-3 text-primary animate-spin" />
+              </div>
+              <div className="flex items-center gap-1 pt-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-primary/60 animate-bounce" />
+                <span className="w-1.5 h-1.5 rounded-full bg-primary/60 animate-bounce [animation-delay:120ms]" />
+                <span className="w-1.5 h-1.5 rounded-full bg-primary/60 animate-bounce [animation-delay:240ms]" />
+              </div>
             </div>
-            <div className="flex items-center gap-1 pt-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-primary/60 animate-bounce" />
-              <span className="w-1.5 h-1.5 rounded-full bg-primary/60 animate-bounce [animation-delay:120ms]" />
-              <span className="w-1.5 h-1.5 rounded-full bg-primary/60 animate-bounce [animation-delay:240ms]" />
-            </div>
-          </div>
+          )}
+        </div>
+
+        {selection && (
+          <SelectionPopover
+            selection={selection}
+            onAsk={handleAskFromSelection}
+            onClose={() => setSelection(null)}
+          />
         )}
       </div>
 
