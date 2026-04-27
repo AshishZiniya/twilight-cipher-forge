@@ -215,6 +215,11 @@ const CanvasInner = () => {
 
   const onPaneDoubleClick = useCallback(
     (event: React.MouseEvent) => {
+      // Only when double-clicking the empty pane / background, not a node
+      const target = event.target as HTMLElement;
+      if (!target.closest(".react-flow__pane") && !target.classList.contains("react-flow__pane")) {
+        return;
+      }
       const pos = screenToFlowPosition({ x: event.clientX, y: event.clientY });
       createCardAt(pos.x, pos.y);
     },
