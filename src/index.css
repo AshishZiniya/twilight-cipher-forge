@@ -22,8 +22,8 @@
     --accent-foreground: 172 66% 30%;
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
-    --border: 214 32% 91%;
-    --input: 214 32% 91%;
+    --border: 214 25% 78%;
+    --input: 214 25% 78%;
     --ring: 172 66% 50%;
     --radius: 0.75rem;
 
@@ -40,7 +40,7 @@
     --sidebar-primary-foreground: 222 47% 5%;
     --sidebar-accent: 172 66% 95%;
     --sidebar-accent-foreground: 172 66% 30%;
-    --sidebar-border: 214 32% 91%;
+    --sidebar-border: 214 25% 78%;
     --sidebar-ring: 172 66% 50%;
 
     --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
