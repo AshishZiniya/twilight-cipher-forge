@@ -103,7 +103,7 @@ const initialNodes: Node[] = [
 const CanvasInner = () => {
   const [nodes, setNodes, onNodesChange] = useNodesState<Node>(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
-  const { screenToFlowPosition, fitView } = useReactFlow();
+  const { screenToFlowPosition, fitView, setCenter } = useReactFlow();
   const [counter, setCounter] = useState(2);
 
   const updateCard = useCallback(
@@ -357,7 +357,8 @@ const CanvasInner = () => {
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
-        onPaneClick={onPaneClick}
+        onPaneClick={() => {}}
+        onDoubleClick={onPaneDoubleClick}
         nodeTypes={nodeTypes}
         fitView
         minZoom={0.2}
