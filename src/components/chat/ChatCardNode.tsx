@@ -189,9 +189,11 @@ const SelectionPopover = ({
 
   return (
     <div
+      data-selection-popover
       className="absolute z-30 -translate-x-1/2 nodrag"
       style={{ left: selection.x, top: selection.y }}
       onMouseDown={(e) => e.stopPropagation()}
+      onMouseUp={(e) => e.stopPropagation()}
       onClick={(e) => e.stopPropagation()}
     >
       <div className="flex items-center gap-1 px-1.5 py-1 rounded-lg bg-popover/95 backdrop-blur-xl border border-border shadow-2xl shadow-black/40">
@@ -265,33 +267,39 @@ const ChatCardNode = ({ id, data, selected }: NodeProps) => {
   };
 
   // Track text selection within the messages area
-  const handleSelection = useCallback(() => {
-    const sel = window.getSelection();
-    if (!sel || sel.isCollapsed || sel.rangeCount === 0) {
-      setSelection(null);
-      return;
-    }
-    const text = sel.toString().trim();
-    if (!text || text.length < 2) {
-      setSelection(null);
-      return;
-    }
-    const container = messagesRef.current;
-    if (!container) return;
-    // Make sure selection is inside this card's messages
-    const range = sel.getRangeAt(0);
-    if (!container.contains(range.commonAncestorContainer)) {
-      setSelection(null);
-      return;
-    }
-    const rect = range.getBoundingClientRect();
-    const containerRect = container.getBoundingClientRect();
-    setSelection({
-      text,
-      x: rect.left - containerRect.left + rect.width / 2,
-      y: rect.top - containerRect.top - 8,
-    });
-  }, []);
+  const handleSelection = useCallback(
+    (e: React.MouseEvent | React.KeyboardEvent) => {
+      // Don't recompute while interacting with the popover itself
+      const target = e.target as HTMLElement | null;
+      if (target?.closest("[data-selection-popover]")) return;
+
+      const sel = window.getSelection();
+      if (!sel || sel.isCollapsed || sel.rangeCount === 0) {
+        setSelection(null);
+        return;
+      }
+      const text = sel.toString().trim();
+      if (!text || text.length < 2) {
+        setSelection(null);
+        return;
+      }
+      const container = messagesRef.current;
+      if (!container) return;
+      const range = sel.getRangeAt(0);
+      if (!container.contains(range.commonAncestorContainer)) {
+        setSelection(null);
+        return;
+      }
+      const rect = range.getBoundingClientRect();
+      const containerRect = container.getBoundingClientRect();
+      setSelection({
+        text,
+        x: rect.left - containerRect.left + rect.width / 2,
+        y: rect.top - containerRect.top - 8,
+      });
+    },
+    []
+  );
 
   const handleAskFromSelection = (prompt: string) => {
     if (!selection) return;
