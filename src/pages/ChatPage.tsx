@@ -93,7 +93,7 @@ const initialNodes: Node[] = [
   {
     id: "welcome",
     type: "chatCard",
-        dragHandle: ".card-drag-handle",
+    dragHandle: ".card-drag-handle",
     position: { x: 80, y: 80 },
     data: { title: "Welcome", messages: [] },
     style: { width: 380, height: 360 },
@@ -255,7 +255,6 @@ const CanvasInner = () => {
           onRename: handleRename,
           onBranch: handleBranch,
         },
-        dragHandle: undefined,
       })),
     [nodes, handleSend, handleDelete, handleRename, handleBranch]
   );
