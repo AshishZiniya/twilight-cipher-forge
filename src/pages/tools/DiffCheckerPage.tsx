@@ -135,16 +135,14 @@ const DiffCheckerPage = () => {
             </div>
           ) : (
             <div className="font-mono text-sm overflow-auto max-h-[32rem] grid grid-cols-2 gap-x-3">
-              {splitRows.map((r, i) => (
-                <>
-                  <div key={`l${i}`} className={`px-3 py-0.5 rounded ${r.left ? opStyle[r.left.op] : ""}`}>
-                    <span className="whitespace-pre-wrap">{r.left?.value ?? " "}</span>
-                  </div>
-                  <div key={`r${i}`} className={`px-3 py-0.5 rounded ${r.right ? opStyle[r.right.op] : ""}`}>
-                    <span className="whitespace-pre-wrap">{r.right?.value ?? " "}</span>
-                  </div>
-                </>
-              ))}
+              {splitRows.flatMap((r, i) => [
+                <div key={`l${i}`} className={`px-3 py-0.5 rounded ${r.left ? opStyle[r.left.op] : ""}`}>
+                  <span className="whitespace-pre-wrap">{r.left?.value ?? " "}</span>
+                </div>,
+                <div key={`r${i}`} className={`px-3 py-0.5 rounded ${r.right ? opStyle[r.right.op] : ""}`}>
+                  <span className="whitespace-pre-wrap">{r.right?.value ?? " "}</span>
+                </div>,
+              ])}
             </div>
           )}
         </div>
