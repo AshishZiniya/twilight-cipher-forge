@@ -5,7 +5,7 @@ import {
   Background,
   BackgroundVariant,
   Controls,
-  MiniMap,
+  
   Panel,
   useNodesState,
   useEdgesState,
@@ -392,13 +392,7 @@ const CanvasInner = () => {
           className="!bg-card/80 !backdrop-blur-xl !border !border-border/60 !rounded-lg !shadow-xl [&_button]:!bg-transparent [&_button]:!border-border/40 [&_button]:!text-foreground [&_button:hover]:!bg-muted"
           showInteractive={false}
         />
-        <MiniMap
-          className="!bg-card/80 !backdrop-blur-xl !border !border-border/60 !rounded-lg !shadow-xl"
-          nodeColor="hsl(var(--primary) / 0.6)"
-          maskColor="hsl(var(--background) / 0.7)"
-          pannable
-          zoomable
-        />
+
 
         {/* Top toolbar */}
         <Panel position="top-left" className="!m-3">
