@@ -93,6 +93,7 @@ const initialNodes: Node[] = [
   {
     id: "welcome",
     type: "chatCard",
+        dragHandle: ".card-drag-handle",
     position: { x: 80, y: 80 },
     data: { title: "Welcome", messages: [] },
     style: { width: 380, height: 360 },
@@ -162,6 +163,7 @@ const CanvasInner = () => {
       const newNode: Node = {
         id: newId,
         type: "chatCard",
+        dragHandle: ".card-drag-handle",
         position: {
           x: (source.position?.x ?? 0) + (source.width ?? 380) + 80,
           y: (source.position?.y ?? 0) + 40,
@@ -192,6 +194,7 @@ const CanvasInner = () => {
       const newNode: Node = {
         id: newId,
         type: "chatCard",
+        dragHandle: ".card-drag-handle",
         position: { x: flowX - 190, y: flowY - 180 },
         data: { title: "New Chat", messages: [] },
         style: { width: 380, height: 360 },
